@@ -1,4 +1,6 @@
 import { useApi } from "@/hooks/useApi.tsx";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/DataTable.tsx";
 
 export type Data = {
   date: string;
@@ -10,7 +12,7 @@ export type Data = {
 };
 
 export const App = () => {
-  const { data, isLoading, error } = useApi<Data>("GET", "", null);
+  const { data, isLoading, error } = useApi<Data[]>("GET", "", null);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -24,7 +26,36 @@ export const App = () => {
     return <div>Unable to retrieve data.</div>;
   }
 
-  console.log(data);
+  const columns: ColumnDef<Data>[] = [
+    {
+      accessorKey: "date",
+      header: "Date",
+    },
+    {
+      accessorKey: "revenue",
+      header: "Revenue",
+    },
+    {
+      accessorKey: "netIncome",
+      header: "Net Income",
+    },
+    {
+      accessorKey: "grossProfit",
+      header: "Gross Profit",
+    },
+    {
+      accessorKey: "eps",
+      header: "EPS",
+    },
+    {
+      accessorKey: "operatingIncome",
+      header: "Operating Income",
+    },
+  ];
 
-  return <div>Hello, world.</div>;
+  return (
+    <div>
+      <DataTable columns={columns} data={data} />
+    </div>
+  );
 };

@@ -78,8 +78,23 @@ export const App = () => {
     });
   };
 
-  const filterData = (data: RangeSchemaType) => {
-    getData(`?column=${filter}&min=${data.min}&max=${data.max}`).then();
+  const filterData = (form: RangeSchemaType) => {
+    if (!data) {
+      getData(`?column=${filter}&min=${form.min}&max=${form.max}`).then();
+    } else {
+      setData((data) =>
+        data
+          ? [...data].filter((e) => {
+              if (filter === "date") {
+                const year = parseInt(e[filter].split("-")[0]);
+                return form.min <= year && year <= form.max;
+              }
+
+              return form.min <= e[filter] && e[filter] <= form.max;
+            })
+          : null,
+      );
+    }
   };
 
   if (error) {

@@ -23,7 +23,7 @@ def index():
     argmin = request.args.get("min")
     argmax = request.args.get("max")
     if column and argmin and argmax:
-        data = list(filter(lambda x: int(argmin) <= (int(x["calendarYear"]) if column == "date" else x[column])<= int(argmax),
+        data = list(filter(lambda x: int(argmin) <= (int(x["calendarYear"]) if column == "date" else x[column]) <= int(argmax),
                       list(data)))
 
     # Sort

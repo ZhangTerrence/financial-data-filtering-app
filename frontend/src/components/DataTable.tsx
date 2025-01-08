@@ -1,11 +1,13 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.tsx";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { OperationStates } from "@/App.tsx";
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.tsx";
+
+import { OperationalColumns } from "@/lib/types.ts";
 
 export type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  sort: (column: OperationStates) => void;
+  sortData: (column: OperationalColumns) => void;
 };
 
 export const DataTable = <TData, TValue>(props: DataTableProps<TData, TValue>) => {

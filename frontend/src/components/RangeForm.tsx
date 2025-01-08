@@ -1,18 +1,20 @@
-import { useForm } from "react-hook-form";
-import { RangeSchema, RangeSchemaType } from "@/lib/validator.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button.tsx";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
-import { OperationStates } from "@/App.tsx";
+
+import type { OperationalColumns } from "@/lib/types.ts";
+import { RangeSchema, RangeSchemaType } from "@/lib/validator.ts";
 
 export type RangeFormProps = {
-  onSubmit: (data: RangeSchemaType) => void;
-  filter: OperationStates | undefined;
-  changeFilter: (value: OperationStates) => void;
+  filterData: (data: RangeSchemaType) => void;
+  filteredColumn: OperationalColumns | undefined;
+  changeFilteredColumn: (value: OperationalColumns) => void;
 };
 
 export const RangeForm = (props: RangeFormProps) => {
@@ -33,7 +35,10 @@ export const RangeForm = (props: RangeFormProps) => {
         <Label className="flex items-center space-x-2">
           <p>Filter By</p>
         </Label>
-        <Select defaultValue={props.filter} onValueChange={(value) => props.changeFilter(value as OperationStates)}>
+        <Select
+          defaultValue={props.filteredColumn}
+          onValueChange={(value) => props.changeFilteredColumn(value as OperationalColumns)}
+        >
           <SelectTrigger className="w-[180px] grow">
             <SelectValue />
           </SelectTrigger>
@@ -45,7 +50,7 @@ export const RangeForm = (props: RangeFormProps) => {
         </Select>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(props.onSubmit)} className="flex flex-col space-y-4">
+        <form onSubmit={form.handleSubmit(props.filterData)} className="flex flex-col space-y-4">
           <FormField
             control={form.control}
             name="min"

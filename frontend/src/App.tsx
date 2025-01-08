@@ -1,38 +1,25 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable.tsx";
-import { ArrowDownIcon, ArrowUpIcon, LoaderCircleIcon } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
 import { useEffect, useState } from "react";
-import { RangeForm } from "@/components/RangeForm.tsx";
-import { RangeSchemaType } from "@/lib/validator.ts";
-import { Toaster } from "@/components/ui/sonner.tsx";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowDownIcon, ArrowUpIcon, LoaderCircleIcon } from "lucide-react";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button.tsx";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog.tsx";
+import { Toaster } from "@/components/ui/sonner.tsx";
 
-export type Data = {
-  date: string;
-  revenue: number;
-  netIncome: number;
-  grossProfit: number;
-  eps: number;
-  operatingIncome: number;
-};
+import { DataTable } from "@/components/DataTable.tsx";
+import { RangeForm } from "@/components/RangeForm.tsx";
 
-export type OperationStates = "date" | "revenue" | "netIncome";
-
-type SortState = {
-  column: OperationStates | null;
-  asc: boolean | null;
-};
+import type { Data, OperationalColumns, SortedColumn } from "@/lib/types.ts";
+import { RangeSchemaType } from "@/lib/validator.ts";
 
 export const App = () => {
   const [data, setData] = useState<Data[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [filter, setFilter] = useState<OperationStates | undefined>(undefined);
-  const [sort, setSort] = useState<SortState>({
-    column: null,
-    asc: null,
-  });
+
+  const [filteredColumn, setFilteredColumn] = useState<OperationalColumns | undefined>(undefined);
+  const [sortedColumn, setSortedColumn] = useState<SortedColumn>({ name: null, asc: null });
 
   const getData = async (query: string = "") => {
     setIsLoading(true);
@@ -64,39 +51,37 @@ export const App = () => {
     getData().then();
   }, []);
 
-  const sortData = (column: OperationStates) => {
-    const toggleAsc = sort.asc == null ? true : !sort.asc;
+  const sortData = (column: OperationalColumns) => {
+    const asc = sortedColumn.asc == null ? true : !sortedColumn.asc;
 
-    if (!data || !filter) {
-      getData(`?column=${column}&asc=${toggleAsc}`).then();
+    if (!data || !filteredColumn) {
+      getData(`?column=${column}&asc=${asc}`).then();
     } else {
+      // Sorts data that has already been fetched or filtered
       setData((data) =>
         [...data].sort((x, y) => {
           if (column === "date") {
-            return x[column].localeCompare(y[column]) * (toggleAsc ? 1 : -1);
+            return x[column].localeCompare(y[column]) * (asc ? 1 : -1);
           }
 
-          return (x[column] - y[column]) * (toggleAsc ? 1 : -1);
+          return (x[column] - y[column]) * (asc ? 1 : -1);
         }),
       );
     }
-    setSort({
-      column: column as OperationStates,
-      asc: toggleAsc,
-    });
+    setSortedColumn({ name: column as OperationalColumns, asc: asc });
   };
 
   const filterData = (form: RangeSchemaType) => {
-    if (filter) {
-      getData(`?column=${filter}&min=${form.min}&max=${form.max}`).then();
+    if (!filteredColumn) {
+      toast.error("Please select an attribute to filter.");
       return;
     }
 
-    toast.error("Please select an attribute to filter.");
+    getData(`?column=${filteredColumn}&min=${form.min}&max=${form.max}`).then();
   };
 
-  const changeFilter = (value: OperationStates) => {
-    setFilter(value);
+  const changeFilteredColumn = (value: OperationalColumns) => {
+    setFilteredColumn(value);
   };
 
   const columns: ColumnDef<Data>[] = [
@@ -107,10 +92,10 @@ export const App = () => {
           <Button
             variant="ghost"
             className="hover:bg-transparent align-center"
-            onClick={() => sortData(column.id as OperationStates)}
+            onClick={() => sortData(column.id as OperationalColumns)}
           >
             Date
-            {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
+            {sortedColumn.name != column.id || sortedColumn.asc == null ? null : sortedColumn.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
             ) : (
               <ArrowDownIcon className="ml-2 h-4 w-4" />
@@ -129,10 +114,10 @@ export const App = () => {
           <Button
             variant="ghost"
             className="hover:bg-transparent"
-            onClick={() => sortData(column.id as OperationStates)}
+            onClick={() => sortData(column.id as OperationalColumns)}
           >
             Revenue
-            {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
+            {sortedColumn.name != column.id || sortedColumn.asc == null ? null : sortedColumn.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
             ) : (
               <ArrowDownIcon className="ml-2 h-4 w-4" />
@@ -157,10 +142,10 @@ export const App = () => {
           <Button
             variant="ghost"
             className="hover:bg-transparent"
-            onClick={() => sortData(column.id as OperationStates)}
+            onClick={() => sortData(column.id as OperationalColumns)}
           >
             Net Income
-            {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
+            {sortedColumn.name != column.id || sortedColumn.asc == null ? null : sortedColumn.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
             ) : (
               <ArrowDownIcon className="ml-2 h-4 w-4" />
@@ -222,9 +207,13 @@ export const App = () => {
           <DialogTrigger asChild>
             <Button>Filter</Button>
           </DialogTrigger>
-          <RangeForm onSubmit={filterData} filter={filter} changeFilter={changeFilter} />
+          <RangeForm
+            filterData={filterData}
+            filteredColumn={filteredColumn}
+            changeFilteredColumn={changeFilteredColumn}
+          />
         </Dialog>
-        <DataTable columns={columns} data={data} sort={sortData} />
+        <DataTable columns={columns} data={data} sortData={sortData} />
       </div>
     </div>
   );

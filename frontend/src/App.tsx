@@ -51,6 +51,15 @@ export const App = () => {
     getData().then();
   }, []);
 
+  const filterData = (form: RangeSchemaType) => {
+    if (!filteredColumn) {
+      toast.error("Please select an attribute to filter.");
+      return;
+    }
+
+    getData(`?column=${filteredColumn}&min=${form.min}&max=${form.max}`).then();
+  };
+
   const sortData = (column: OperationalColumns) => {
     const asc = sortedColumn.asc == null ? true : !sortedColumn.asc;
 
@@ -69,15 +78,6 @@ export const App = () => {
       );
     }
     setSortedColumn({ name: column as OperationalColumns, asc: asc });
-  };
-
-  const filterData = (form: RangeSchemaType) => {
-    if (!filteredColumn) {
-      toast.error("Please select an attribute to filter.");
-      return;
-    }
-
-    getData(`?column=${filteredColumn}&min=${form.min}&max=${form.max}`).then();
   };
 
   const changeFilteredColumn = (value: OperationalColumns) => {
@@ -211,6 +211,7 @@ export const App = () => {
             filterData={filterData}
             filteredColumn={filteredColumn}
             changeFilteredColumn={changeFilteredColumn}
+            resetFilter={getData}
           />
         </Dialog>
         <DataTable columns={columns} data={data} sortData={sortData} />

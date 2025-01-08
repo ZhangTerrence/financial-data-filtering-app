@@ -15,6 +15,7 @@ export type RangeFormProps = {
   filterData: (data: RangeSchemaType) => void;
   filteredColumn: OperationalColumns | undefined;
   changeFilteredColumn: (value: OperationalColumns) => void;
+  resetFilter: () => Promise<void>;
 };
 
 export const RangeForm = (props: RangeFormProps) => {
@@ -81,7 +82,22 @@ export const RangeForm = (props: RangeFormProps) => {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              className="grow"
+              onClick={async (e) => {
+                e.preventDefault();
+                form.reset();
+                await props.resetFilter();
+              }}
+            >
+              Remove Filter
+            </Button>
+            <Button className="grow" type="submit">
+              Submit
+            </Button>
+          </div>
         </form>
       </Form>
     </DialogContent>

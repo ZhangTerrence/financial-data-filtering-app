@@ -104,7 +104,7 @@ export const App = () => {
         );
       },
       cell: ({ row }) => {
-        return <div className="font-medium text-center">{row.getValue("date")}</div>;
+        return <div className="font-medium text-center text-nowrap">{row.getValue("date")}</div>;
       },
     },
     {
@@ -132,7 +132,7 @@ export const App = () => {
           currency: "USD",
         }).format(amount);
 
-        return <div className="font-medium text-center">{formatted}</div>;
+        return <div className="font-medium text-center text-nowrap">{formatted}</div>;
       },
     },
     {
@@ -160,7 +160,7 @@ export const App = () => {
           currency: "USD",
         }).format(amount);
 
-        return <div className="font-medium text-center">{formatted}</div>;
+        return <div className="font-medium text-center text-nowrap">{formatted}</div>;
       },
     },
     {
@@ -173,14 +173,14 @@ export const App = () => {
           currency: "USD",
         }).format(amount);
 
-        return <div className="font-medium text-center">{formatted}</div>;
+        return <div className="font-medium text-center text-nowrap">{formatted}</div>;
       },
     },
     {
       accessorKey: "eps",
       header: "EPS",
       cell: ({ row }) => {
-        return <div className="font-medium text-center">{row.getValue("date")}</div>;
+        return <div className="font-medium text-center text-nowrap">{row.getValue("eps")}</div>;
       },
     },
     {
@@ -193,7 +193,7 @@ export const App = () => {
           currency: "USD",
         }).format(amount);
 
-        return <div className="font-medium text-center">{formatted}</div>;
+        return <div className="font-medium text-center text-nowrap">{formatted}</div>;
       },
     },
   ];

@@ -17,7 +17,7 @@ CORS(app, origins="*")
 
 
 @app.route("/")
-@cache.cached(timeout=100, query_string=True)
+@cache.cached(timeout=600, query_string=True)
 def index():
     response = requests.get(
         f"https://financialmodelingprep.com/api/v3/income-statement/AAPL?period=annual&apikey={environ.get("API_KEY")}")

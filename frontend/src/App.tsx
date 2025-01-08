@@ -3,10 +3,11 @@ import { DataTable } from "@/components/DataTable.tsx";
 import { ArrowDownIcon, ArrowUpIcon, LoaderCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label.tsx";
 import { RangeForm } from "@/components/RangeForm.tsx";
 import { RangeSchemaType } from "@/lib/validator.ts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
+import { Toaster } from "@/components/ui/sonner.tsx";
+import { toast } from "sonner";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog.tsx";
 
 export type Data = {
   date: string;
@@ -17,7 +18,7 @@ export type Data = {
   operatingIncome: number;
 };
 
-type OperationStates = "date" | "revenue" | "netIncome";
+export type OperationStates = "date" | "revenue" | "netIncome";
 
 type SortState = {
   column: OperationStates | null;
@@ -25,10 +26,9 @@ type SortState = {
 };
 
 export const App = () => {
-  const [data, setData] = useState<Data[] | null>(null);
+  const [data, setData] = useState<Data[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<OperationStates>("date");
+  const [filter, setFilter] = useState<OperationStates | undefined>(undefined);
   const [sort, setSort] = useState<SortState>({
     column: null,
     asc: null,
@@ -42,9 +42,19 @@ export const App = () => {
         method: "GET",
       });
       const data = await response.json();
+
+      if (!data) {
+        toast("Uh oh. Something went wrong.", {
+          description: "Unable to get data.",
+        });
+        return;
+      }
+
       setData(data as Data[]);
     } catch (e) {
-      setError((e as Error).message);
+      toast.error("Uh oh. Something went wrong.", {
+        description: (e as Error).message,
+      });
     }
 
     setIsLoading(false);
@@ -57,19 +67,17 @@ export const App = () => {
   const sortData = (column: OperationStates) => {
     const toggleAsc = sort.asc == null ? true : !sort.asc;
 
-    if (!data) {
+    if (!data || !filter) {
       getData(`?column=${column}&asc=${toggleAsc}`).then();
     } else {
       setData((data) =>
-        data
-          ? [...data].sort((x, y) => {
-              if (column === "date") {
-                return x[column].localeCompare(y[column]) * (toggleAsc ? 1 : -1);
-              }
+        [...data].sort((x, y) => {
+          if (column === "date") {
+            return x[column].localeCompare(y[column]) * (toggleAsc ? 1 : -1);
+          }
 
-              return (x[column] - y[column]) * (toggleAsc ? 1 : -1);
-            })
-          : null,
+          return (x[column] - y[column]) * (toggleAsc ? 1 : -1);
+        }),
       );
     }
     setSort({
@@ -79,38 +87,28 @@ export const App = () => {
   };
 
   const filterData = (form: RangeSchemaType) => {
-    if (!data) {
+    if (filter) {
       getData(`?column=${filter}&min=${form.min}&max=${form.max}`).then();
-    } else {
-      setData((data) =>
-        data
-          ? [...data].filter((e) => {
-              if (filter === "date") {
-                const year = parseInt(e[filter].split("-")[0]);
-                return form.min <= year && year <= form.max;
-              }
-
-              return form.min <= e[filter] && e[filter] <= form.max;
-            })
-          : null,
-      );
+      return;
     }
+
+    toast.error("Please select an attribute to filter.");
   };
 
-  if (error) {
-    return <div>{error}</div>;
-  }
-
-  if (!data) {
-    return <div>Unable to retrieve data.</div>;
-  }
+  const changeFilter = (value: OperationStates) => {
+    setFilter(value);
+  };
 
   const columns: ColumnDef<Data>[] = [
     {
       accessorKey: "date",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => sortData(column.id as OperationStates)}>
+          <Button
+            variant="ghost"
+            className="hover:bg-transparent align-center"
+            onClick={() => sortData(column.id as OperationStates)}
+          >
             Date
             {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
@@ -120,12 +118,19 @@ export const App = () => {
           </Button>
         );
       },
+      cell: ({ row }) => {
+        return <div className="font-medium text-center">{row.getValue("date")}</div>;
+      },
     },
     {
       accessorKey: "revenue",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => sortData(column.id as OperationStates)}>
+          <Button
+            variant="ghost"
+            className="hover:bg-transparent"
+            onClick={() => sortData(column.id as OperationStates)}
+          >
             Revenue
             {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
@@ -135,12 +140,25 @@ export const App = () => {
           </Button>
         );
       },
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("revenue"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium text-center">{formatted}</div>;
+      },
     },
     {
       accessorKey: "netIncome",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => sortData(column.id as OperationStates)}>
+          <Button
+            variant="ghost"
+            className="hover:bg-transparent"
+            onClick={() => sortData(column.id as OperationStates)}
+          >
             Net Income
             {sort.column != column.id || sort.asc == null ? null : sort.asc ? (
               <ArrowUpIcon className="ml-2 h-4 w-4" />
@@ -150,42 +168,63 @@ export const App = () => {
           </Button>
         );
       },
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("netIncome"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium text-center">{formatted}</div>;
+      },
     },
     {
       accessorKey: "grossProfit",
       header: "Gross Profit",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("grossProfit"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium text-center">{formatted}</div>;
+      },
     },
     {
       accessorKey: "eps",
       header: "EPS",
+      cell: ({ row }) => {
+        return <div className="font-medium text-center">{row.getValue("date")}</div>;
+      },
     },
     {
       accessorKey: "operatingIncome",
       header: "Operating Income",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("operatingIncome"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium text-center">{formatted}</div>;
+      },
     },
   ];
 
   return (
-    <div className="min-h-screen w-screen relative">
+    <div className="min-h-screen w-screen relative p-4">
       {isLoading && <LoaderCircleIcon className="absolute absolute-center" />}
-      <div>
-        <div className="flex items-center py-4 justify-center space-x-4">
-          <Label htmlFor="revenue-filter" className="flex items-center space-x-2">
-            <p>Filter By</p>
-            <Select defaultValue={filter} onValueChange={(value) => setFilter(value as OperationStates)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="revenue">Revenue</SelectItem>
-                <SelectItem value="netIncome">Net Income</SelectItem>
-              </SelectContent>
-            </Select>
-          </Label>
-          <RangeForm onSubmit={filterData} />
-        </div>
-        <DataTable columns={columns} data={data} />
+      <Toaster />
+      <div className="flex flex-col gap-y-4">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Filter</Button>
+          </DialogTrigger>
+          <RangeForm onSubmit={filterData} filter={filter} changeFilter={changeFilter} />
+        </Dialog>
+        <DataTable columns={columns} data={data} sort={sortData} />
       </div>
     </div>
   );

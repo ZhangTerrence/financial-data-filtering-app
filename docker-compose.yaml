@@ -1,0 +1,29 @@
+services:
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    env_file: frontend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    env_file: backend/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cache
+
+  cache:
+    image: "redis"
+    restart: "always"
+    volumes:
+      - redis_cache:/var/lib/postgresql/data
+
+volumes:
+  redis_cache:

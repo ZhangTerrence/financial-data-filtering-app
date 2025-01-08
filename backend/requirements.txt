@@ -1,4 +1,6 @@
 flask
 flask-cors
+flask-caching
 requests
 python-dotenv
+redis

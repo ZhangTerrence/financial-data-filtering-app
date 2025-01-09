@@ -1,6 +1,9 @@
 # Financial Data Filtering App
 
-Deployed App: [https://financial-data-filtering-app-frontend.onrender.com/](https://financial-data-filtering-app-frontend.onrender.com/)
+Deployed App: [https://financial-data-filtering-app-frontend.onrender.com/](https://financial-data-filtering-app-frontend.onrender.com/).
+
+Note, since I am using the free tier of Render to host my application, Render automatically closes my instance after inactivity. As a result, 
+it may take a few minutes for the application to be up and running again after the initial visit.
 
 ## How to Run Locally
 
